@@ -1,22 +1,27 @@
 //
 //  main.m
-//  iShell
+//  OCdemo
 //
-//  Created by Sian Cao on 13-5-28.
-//  Copyright (c) 2013年 Freedom. All rights reserved.
+//  Created by Sian Cao on 05/18/13.
+//  Copyright (c) 2013 rf. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "IShell.h"
 
 int main(int argc, const char * argv[])
 {
-
     @autoreleasepool {
+        IShell* ishell = [[IShell alloc] init];
+        [ishell writeMessage:(@"Welcome to iShell\n")];
         
-        // insert code here...
-        NSLog(@"Hello, World!");
-        
+        while (1) {
+            NSString *line = [ishell readline];
+            Command* cmd = [ishell parseLine:line];
+            if (cmd) {
+                [cmd execute];
+            }
+        }
     }
+    
     return 0;
 }
-

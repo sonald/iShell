@@ -10,7 +10,36 @@
 		517C596617544F440018DE14 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 517C596517544F440018DE14 /* Foundation.framework */; };
 		517C596917544F440018DE14 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 517C596817544F440018DE14 /* main.m */; };
 		517C596D17544F440018DE14 /* iShell.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 517C596C17544F440018DE14 /* iShell.1 */; };
+		517C597D175450680018DE14 /* Command.m in Sources */ = {isa = PBXBuildFile; fileRef = 517C5978175450680018DE14 /* Command.m */; };
+		517C597E175450680018DE14 /* IShell.m in Sources */ = {isa = PBXBuildFile; fileRef = 517C597A175450680018DE14 /* IShell.m */; };
+		517C597F175450680018DE14 /* lexer.lm in Sources */ = {isa = PBXBuildFile; fileRef = 517C597B175450680018DE14 /* lexer.lm */; };
+		517C5980175450680018DE14 /* parser.ym in Sources */ = {isa = PBXBuildFile; fileRef = 517C597C175450680018DE14 /* parser.ym */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXBuildRule section */
+		517C597517544F960018DE14 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			fileType = sourcecode.lex;
+			isEditable = 1;
+			outputFiles = (
+				"${DERIVED_FILES_DIR}/lexer.yy.h",
+				"${DERIVED_FILES_DIR}/lexer.yy.m",
+			);
+			script = "# $(LEX)\nflex --header-file=${DERIVED_FILES_DIR}/lexer.yy.h  -o ${DERIVED_FILES_DIR}/lexer.yy.m ${INPUT_FILE_PATH}";
+		};
+		517C597617544FB30018DE14 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			fileType = sourcecode.yacc;
+			isEditable = 1;
+			outputFiles = (
+				"${DERIVED_FILES_DIR}/y.tab.m",
+				"${DERIVED_FILES_DIR}/y.tab.h",
+			);
+			script = "# $(YACC)\nbison -d --debug -o ${DERIVED_FILES_DIR}/y.tab.c ${INPUT_FILE_PATH}\nmv ${DERIVED_FILES_DIR}/y.tab.c ${DERIVED_FILES_DIR}/y.tab.m";
+		};
+/* End PBXBuildRule section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		517C596017544F440018DE14 /* CopyFiles */ = {
@@ -31,6 +60,12 @@
 		517C596817544F440018DE14 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		517C596B17544F440018DE14 /* iShell-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iShell-Prefix.pch"; sourceTree = "<group>"; };
 		517C596C17544F440018DE14 /* iShell.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = iShell.1; sourceTree = "<group>"; };
+		517C5977175450680018DE14 /* Command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Command.h; sourceTree = "<group>"; };
+		517C5978175450680018DE14 /* Command.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Command.m; sourceTree = "<group>"; };
+		517C5979175450680018DE14 /* IShell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IShell.h; sourceTree = "<group>"; };
+		517C597A175450680018DE14 /* IShell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IShell.m; sourceTree = "<group>"; };
+		517C597B175450680018DE14 /* lexer.lm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; path = lexer.lm; sourceTree = "<group>"; };
+		517C597C175450680018DE14 /* parser.ym */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; path = parser.ym; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +108,12 @@
 		517C596717544F440018DE14 /* iShell */ = {
 			isa = PBXGroup;
 			children = (
+				517C5977175450680018DE14 /* Command.h */,
+				517C5978175450680018DE14 /* Command.m */,
+				517C5979175450680018DE14 /* IShell.h */,
+				517C597A175450680018DE14 /* IShell.m */,
+				517C597B175450680018DE14 /* lexer.lm */,
+				517C597C175450680018DE14 /* parser.ym */,
 				517C596817544F440018DE14 /* main.m */,
 				517C596C17544F440018DE14 /* iShell.1 */,
 				517C596A17544F440018DE14 /* Supporting Files */,
@@ -100,6 +141,8 @@
 				517C596017544F440018DE14 /* CopyFiles */,
 			);
 			buildRules = (
+				517C597617544FB30018DE14 /* PBXBuildRule */,
+				517C597517544F960018DE14 /* PBXBuildRule */,
 			);
 			dependencies = (
 			);
@@ -140,6 +183,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				517C596917544F440018DE14 /* main.m in Sources */,
+				517C597D175450680018DE14 /* Command.m in Sources */,
+				517C597E175450680018DE14 /* IShell.m in Sources */,
+				517C597F175450680018DE14 /* lexer.lm in Sources */,
+				517C5980175450680018DE14 /* parser.ym in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

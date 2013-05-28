@@ -1,0 +1,22 @@
+%{
+    #import "Command.h"
+    #import "y.tab.h"
+%}
+
+%option noyywrap
+
+ // any non-white is legal, what is means will determined by parser
+VALID [^ \t\n\r;<>?]
+
+%%
+";"|"<"|">"   { return yytext[0]; }
+
+"\n"         { return EOL; }
+
+{VALID}+     { 
+    yylval.id = strdup(yytext);
+    return ID;
+}
+
+
+%%

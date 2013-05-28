@@ -1,0 +1,100 @@
+%{
+    #import <Foundation/Foundation.h>
+    #import "Command.h"
+    
+
+    void yyerror(IShell* ishell, const char* msg);
+    extern int yylex();
+    struct args_ {
+        int len;
+        char** data;
+    };
+    
+    id parsed[256];
+    int cmdptr = -1;
+%}
+
+%parse-param { IShell* ishell }
+
+%union {
+    struct args_* args;
+    char* id;
+    int cmd; // index of cmd in parsed
+}
+
+%token <id> ID
+%token EOL
+%type <args> ids
+%type <cmd> command cmdline command_group
+%%
+
+cmdline: { cmdptr = -1; } command_group;
+
+command_group:
+    command tail {
+        GroupCommand* cmd = [[GroupCommand alloc] init];
+        cmd.commands = [NSArray arrayWithObject: parsed[$1]];
+        cmd.shell = ishell;
+        
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+    }
+    | command ';' command_group tail {
+        GroupCommand* cmd = [[GroupCommand alloc] init];
+        
+        GroupCommand* cmd2 = parsed[$3];
+        NSMutableArray* subs = [NSMutableArray arrayWithArray: cmd2.commands];
+        [subs insertObject: parsed[$1] atIndex: 0];
+        cmd.commands = subs;
+        cmd.shell = ishell;
+        
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+    }
+    ;
+
+command: 
+    ID ids {
+        Command *cmd = [[Command alloc] init];
+        cmd.cmd = [NSString stringWithUTF8String: $1];
+        
+        NSMutableArray *arr =  [[NSMutableArray alloc] init];
+        if ($2 != NULL) {
+            for (int i = 0; i < $2->len; ++i) {
+                [arr addObject:[NSString stringWithUTF8String: $2->data[i]]];
+            }
+        }
+        cmd.args = arr;
+        cmd.shell = ishell;
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+    }
+    ;
+
+tail:
+    | ';' {  }
+    ;
+
+ids: 
+    { $$ = NULL; }
+    | ID ids { 
+        $$ = malloc(sizeof(struct args_));
+        $$->len = 1;
+        if ($2 != NULL) {
+            $$->len += $2->len;
+        }
+        
+        $$->data = malloc(sizeof(char*) * $$->len);
+        $$->data[0] = strdup($1);
+        for (int i = 1; $2 != NULL && i < $$->len; ++i) {
+            $$->data[i] = strdup($2->data[i-1]);
+        }
+    }
+    ;
+    
+
+%%
+
+void yyerror(IShell* ishell, const char* msg) {
+    NSLog(@"parse error: %s", msg);
+}
