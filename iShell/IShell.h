@@ -6,10 +6,13 @@
 //  Copyright (c) 2013年 rf. All rights reserved.
 //
 
+#import <histedit.h>
 #import <Foundation/Foundation.h>
 #import "Command.h"
 
 @interface IShell: NSObject
+
+- (EditLine*) editLine;
 
 /**
  * @param line

@@ -10,50 +10,75 @@
 #import "lexer.yy.h"
 #import "y.tab.h"
 
+
+static char *lprompt(EditLine *el) {
+    return "> ";
+}
+
 @implementation IShell {
-    NSFileHandle *inputHandle;
-    NSFileHandle *outputHandle;
+    NSFileHandle *_outputHandle;
+    EditLine* _editLine;
+    History* _hist;
 }
 
 - (id) init {
     self = [super init];
     if (self) {
-        inputHandle = [NSFileHandle fileHandleWithStandardInput];
-        outputHandle = [NSFileHandle fileHandleWithStandardOutput];
+        _outputHandle = [NSFileHandle fileHandleWithStandardOutput];
+        
+        _editLine = el_init("ishell", stdin, stdout, stderr);
+        _hist = history_init();
+        
+        el_set(_editLine, EL_HIST, history, _hist);
+        el_set(_editLine, EL_SIGNAL, 1);
+        el_set(_editLine, EL_TERMINAL, NULL);
+        el_set(_editLine, EL_PROMPT, lprompt);
+        el_set(_editLine, EL_EDITOR, "emacs");
+        el_set(_editLine, EL_TELLTC, NULL);
+        
+
     }
     return self;
 }
 
+- (void) dealloc {
+    NSLog(@"dealloc ishell");
+    [_outputHandle closeFile];
+    history_end(_hist);
+    el_end(_editLine);
+}
+
+- (EditLine*) editLine {
+    return _editLine;
+}
+
 - (void) writeMessage:(NSString *)msg {
-    [outputHandle writeData: [msg dataUsingEncoding:NSUTF8StringEncoding]];
+    [_outputHandle writeData: [msg dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
 - (NSString *) readline {
-    NSMutableString *result = [[NSMutableString alloc] init];
-    NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:@"\\\\\\s+$" options:NSRegularExpressionAnchorsMatchLines error:nil];
+    int count = 0;
+    const char* line = el_gets(_editLine, &count);
+    NSLog(@"readline: [%s]", line);
+    if (line) {
+        NSMutableString *result = [NSMutableString stringWithUTF8String:line];
+        return [result stringByTrimmingCharactersInSet: [NSCharacterSet characterSetWithCharactersInString:@" \t\n\r"]];
+    }
     
-    do {
-        NSString *line = [[NSString alloc] initWithData:[inputHandle availableData] encoding:NSUTF8StringEncoding];
-//        NSLog(@"GOT: [%@]", line);
-        [result appendString:line];
-
-        if ([re numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] == 0) {
-            break;
-        }
-
-        NSRange range = [re rangeOfFirstMatchInString:line options:0 range:NSMakeRange(0, [line length])];
-        [result deleteCharactersInRange:range];
-    } while (YES);
-    
-    return [result stringByTrimmingCharactersInSet: [NSCharacterSet characterSetWithCharactersInString:@" \t\n\r"]];
-            
+    return nil;
 }
 
 extern int yyparse();
 
 - (Command*) parseLine: (NSString*) cmdline {
-
+    if (!cmdline) {
+        return nil;
+    }
     const char* buf = [cmdline UTF8String];
+    NSLog(@"parsing [%s]", buf);
+
+    
+    /* unknown bultiin */
     YY_BUFFER_STATE bp = yy_scan_string(buf);
     yy_switch_to_buffer(bp);
     int result = yyparse(self);

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		51720F1417545E5F00790762 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 51720F1317545E5F00790762 /* libedit.dylib */; };
+		51720F1617545E6800790762 /* libcurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 51720F1517545E6800790762 /* libcurses.dylib */; };
 		517C596617544F440018DE14 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 517C596517544F440018DE14 /* Foundation.framework */; };
 		517C596917544F440018DE14 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 517C596817544F440018DE14 /* main.m */; };
 		517C596D17544F440018DE14 /* iShell.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 517C596C17544F440018DE14 /* iShell.1 */; };
@@ -55,6 +57,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		51720F1317545E5F00790762 /* libedit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libedit.dylib; path = usr/lib/libedit.dylib; sourceTree = SDKROOT; };
+		51720F1517545E6800790762 /* libcurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcurses.dylib; path = usr/lib/libcurses.dylib; sourceTree = SDKROOT; };
 		517C596217544F440018DE14 /* iShell */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = iShell; sourceTree = BUILT_PRODUCTS_DIR; };
 		517C596517544F440018DE14 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		517C596817544F440018DE14 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -73,6 +77,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				51720F1617545E6800790762 /* libcurses.dylib in Frameworks */,
+				51720F1417545E5F00790762 /* libedit.dylib in Frameworks */,
 				517C596617544F440018DE14 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -83,6 +89,8 @@
 		517C595917544F440018DE14 = {
 			isa = PBXGroup;
 			children = (
+				51720F1517545E6800790762 /* libcurses.dylib */,
+				51720F1317545E5F00790762 /* libedit.dylib */,
 				517C596717544F440018DE14 /* iShell */,
 				517C596417544F440018DE14 /* Frameworks */,
 				517C596317544F440018DE14 /* Products */,
@@ -289,6 +297,7 @@
 				517C597217544F440018DE14 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -18,7 +18,7 @@
 
 @property (nonatomic, retain) NSString* cmd;
 @property (nonatomic, retain) NSArray* args;
-@property (nonatomic, retain) IShell* shell;
+@property (nonatomic, weak) IShell* shell;
 
 - (int) execute;
 - (BOOL) isBuiltinCommand: (NSString*) cmd;

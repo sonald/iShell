@@ -17,9 +17,7 @@ int main(int argc, const char * argv[])
         while (1) {
             NSString *line = [ishell readline];
             Command* cmd = [ishell parseLine:line];
-            if (cmd) {
-                [cmd execute];
-            }
+            [cmd execute];
         }
     }
     

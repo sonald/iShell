@@ -59,11 +59,22 @@
 
 
 - (int) execute {
-//    NSLog(@"run %@", self);
+    //1. try Command builtin
     if ([self isBuiltinCommand:self.cmd]) {
         return [self runBuiltinCommand:self.cmd];
     }
     
+    //2. try editLine builtin
+    int argc = (int)[self.args count] + 1;
+    char** argv = [self cmdToCZArray];
+    if (el_parse([self.shell editLine], argc, (const char**)argv) != -1) {
+        NSLog(@"el_parse executed");
+        free(argv);
+        return 0;
+    }
+    free(argv);
+    
+    //3. find external executable
     int child = -1;
     switch(child = fork()) {
         case 0:
@@ -72,7 +83,8 @@
             char** argv = [self cmdToCZArray];
             if (execvp(argv[0], argv) < 0) {
                 NSLog(@"execvp: %s", strerror(errno));
-                return (errno);
+                free(argv);
+                exit(errno);
             }
             break;
         }
@@ -84,7 +96,8 @@
             if (WIFEXITED(stat)) {
                 NSLog(@"exited with %d", WEXITSTATUS(stat));
                 if (WEXITSTATUS(stat) != 0) {
-                    @throw [NSException exceptionWithName:@"waitpid" reason:@"child failed" userInfo:nil];
+                    @throw [NSException exceptionWithName:@"waitpid" reason:
+                            [NSString stringWithFormat:@"child exited with %d", WEXITSTATUS(stat)] userInfo:nil];
                 }
                 
             } else if (WIFSIGNALED(stat)) {
@@ -153,7 +166,7 @@
             ret = [cmd execute];
         }
         @catch (NSException *exception) {
-            NSLog(@"exec failed: %@%@", [exception name], [exception reason]);
+            NSLog(@"%@: %@", [exception name], [exception reason]);
         }
     }
     return ret;
