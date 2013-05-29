@@ -15,6 +15,16 @@ static char *lprompt(EditLine *el) {
     return "> ";
 }
 
+static unsigned char elfn_quit(EditLine *e, int ch) {
+    NSLog(@"elfn_quit: %d", ch);
+    IShell* shell;
+    el_get(e, EL_CLIENTDATA, &shell);
+    Command *cmd = [[Command alloc] init];
+    cmd.cmd = @"exit";
+    cmd.shell = shell;
+    return [cmd execute];
+}
+
 @implementation IShell {
     NSFileHandle *_outputHandle;
     EditLine* _editLine;
@@ -36,7 +46,10 @@ static char *lprompt(EditLine *el) {
         el_set(_editLine, EL_EDITOR, "emacs");
         el_set(_editLine, EL_TELLTC, NULL);
         
-
+        el_set(_editLine, EL_CLIENTDATA, (__bridge void*)self);
+        
+        el_set(_editLine, EL_ADDFN, "el-quit", "quit shell", elfn_quit);
+        el_set(_editLine, EL_BIND, "^D", "el-quit", NULL);
     }
     return self;
 }

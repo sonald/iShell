@@ -9,6 +9,11 @@
 #import "Command.h"
 #import "IShell.h"
 
+@interface Command() {
+    NSDictionary *builtinCommands;
+}
+@end
+
 @implementation Command
 
 - (Command*)copyWithZone:(NSZone*)zone {
@@ -155,6 +160,7 @@
 }
 
 @end
+
 
 
 @implementation GroupCommand

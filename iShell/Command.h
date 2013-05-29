@@ -12,9 +12,7 @@
 
 //TODO: need a cmdline parser
 // need support pipes, redirection, sub,
-@interface Command : NSObject <NSCopying> {
-    NSDictionary *builtinCommands;
-}
+@interface Command : NSObject <NSCopying>
 
 @property (nonatomic, retain) NSString* cmd;
 @property (nonatomic, retain) NSArray* args;
@@ -35,8 +33,15 @@
 // a sequence of commands executed consecutively
 @interface GroupCommand : Command
 @property (nonatomic, retain) NSArray* commands;
+
 - (int)execute;
 - (NSString*) description;
+@end
+
+@protocol Printing
+
+- (void) printSelf;
+
 @end
 
 // used in parser
