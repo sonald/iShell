@@ -38,6 +38,14 @@
 - (NSString*) description;
 @end
 
+@interface PipelineCommand : Command
+@property (nonatomic, retain) NSArray* commands;
+
+- (int)execute;
+- (NSString*) description;
+@end
+
+
 @protocol Printing
 
 - (void) printSelf;

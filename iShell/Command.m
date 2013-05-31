@@ -12,6 +12,8 @@
 @interface Command() {
     NSDictionary *builtinCommands;
 }
+
+- (int) exec; // run Command by exec syscall
 @end
 
 @implementation Command
@@ -62,6 +64,17 @@
     return self;
 }
 
+- (int) exec {
+    //TODO: do PATH searching
+    char** argv = [self cmdToCZArray];
+    if (execvp(argv[0], argv) < 0) {
+        NSLog(@"execvp: %s", strerror(errno));
+        free(argv);
+        exit(errno);
+    }
+    
+    return 0;
+}
 
 - (int) execute {
     //1. try Command builtin
@@ -84,13 +97,7 @@
     switch(child = fork()) {
         case 0:
         {
-            //TODO: do PATH searching
-            char** argv = [self cmdToCZArray];
-            if (execvp(argv[0], argv) < 0) {
-                NSLog(@"execvp: %s", strerror(errno));
-                free(argv);
-                exit(errno);
-            }
+            [self exec];
             break;
         }
             
@@ -179,11 +186,105 @@
 }
 
 - (NSString*)description {
-    NSMutableArray *infos = [[NSMutableArray alloc] init];
-    for (Command* cmd in self.commands) {
-        [infos addObject:[cmd description]];
-    }
-    return [infos componentsJoinedByString:@", "];
+    NSMutableString *info = [[NSMutableString alloc] init];
+    [self.commands enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        if (idx > 0) {
+            [info appendFormat:@"; %@", obj];
+        } else {
+            [info appendFormat:@"%@", obj];
+        }
+    }];
+    
+    return info;
 }
 @end
 
+
+@implementation PipelineCommand
+
+- (int)execute {
+    NSLog(@"run PipelineCommand");
+    int child = -1;
+    switch(child = fork()) {
+        case 0:
+        {
+            int fildes[2];
+            if (pipe(fildes)) {
+                NSLog(@"pipe failed: %s", strerror(errno));
+                return -errno;
+            }
+            
+            Command* cmd1 = [self.commands objectAtIndex:0];
+            Command* cmd2 = [self.commands objectAtIndex:1];
+            NSLog(@"cmd1: %@, cmd2: %@", cmd1, cmd2);
+            
+            switch (fork()) {
+                case 0:
+                    // 2nd cmd
+                    close(fildes[1]);
+                    if (fildes[0] != STDIN_FILENO) {
+                        if (dup2(fildes[0], STDIN_FILENO) != STDIN_FILENO) {
+                            NSLog(@"dup2: %s", strerror(errno));
+                            exit(errno);
+                        }
+                        close(fildes[0]);
+                    }
+                    
+                    [cmd2 exec];
+                    break;
+                    
+                default:
+                    // 1st cmd
+                    close(fildes[0]);
+                    if (fildes[1] != STDOUT_FILENO) {
+                        if (dup2(fildes[1], STDOUT_FILENO) != STDOUT_FILENO) {
+                            NSLog(@"dup2: %s", strerror(errno));
+                            exit(errno);
+                        }
+                        close(fildes[1]);
+                    }
+                    
+                    [cmd1 exec];
+                    break;
+            }
+            break;
+        }
+            
+        default:
+        {
+            int stat = 0;
+            waitpid(child, &stat, 0);
+            if (WIFEXITED(stat)) {
+                NSLog(@"exited with %d", WEXITSTATUS(stat));
+                if (WEXITSTATUS(stat) != 0) {
+                    @throw [NSException exceptionWithName:@"waitpid" reason:
+                            [NSString stringWithFormat:@"child exited with %d", WEXITSTATUS(stat)] userInfo:nil];
+                }
+                
+            } else if (WIFSIGNALED(stat)) {
+                NSLog(@"signaled with %d", WTERMSIG(stat));
+                @throw [NSException exceptionWithName:@"waitpid" reason:@"signal" userInfo:nil];
+            }
+            
+            
+            break;
+        }
+
+    }
+    return 0;
+}
+
+- (NSString*) description {
+    NSMutableString *result = [[NSMutableString alloc] init];
+    [self.commands enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        if (idx == 0) {
+            [result appendFormat:@"%@", obj];
+        } else {
+            [result appendFormat:@"| %@", obj];
+        }
+    }];
+    
+    return result;
+}
+
+@end

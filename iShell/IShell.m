@@ -91,7 +91,7 @@ extern int yyparse();
     NSLog(@"parsing [%s]", buf);
 
     
-    /* unknown bultiin */
+    /* unknown builtin, do parsing */
     YY_BUFFER_STATE bp = yy_scan_string(buf);
     yy_switch_to_buffer(bp);
     int result = yyparse(self);

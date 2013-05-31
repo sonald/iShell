@@ -25,10 +25,11 @@
 %token <id> ID
 %token EOL
 %type <args> ids
-%type <cmd> command cmdline command_group
+%type <cmd> command cmdline command_group pipeline pipeline_tail pipeline_component
 %%
 
 cmdline: { cmdptr = -1; } command_group;
+
 
 command_group:
     command tail {
@@ -69,7 +70,55 @@ command:
         parsed[++cmdptr] = cmd;
         $$ = cmdptr;
     }
+    | pipeline
     ;
+
+
+ /* pipeline processing */
+pipeline: command pipeline_tail {
+        PipelineCommand *cmd = [[PipelineCommand alloc] init];
+        cmd.shell = ishell;
+        
+        NSMutableArray *arr = [[NSMutableArray alloc] init];
+        [arr addObject: parsed[$1]];        
+        
+        PipelineCommand *cmd2 = parsed[$2];
+        [arr addObjectsFromArray: cmd2.commands];
+
+        cmd.commands = arr;
+        
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+    };
+
+pipeline_tail: 
+    pipeline_component {
+        PipelineCommand *cmd = [[PipelineCommand alloc] init];
+        cmd.commands = [NSArray arrayWithObject: parsed[$1]];
+        cmd.shell = ishell;
+        
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+    }
+    | pipeline_tail pipeline_component {
+        PipelineCommand *cmd = [[PipelineCommand alloc] init];
+        PipelineCommand *cmd2 = parsed[$1];
+        
+        NSMutableArray *arr = [[NSMutableArray alloc] init];
+        [arr addObjectsFromArray: cmd2.commands];
+        [arr addObject: parsed[$2]];
+        
+        cmd.commands = arr;
+        cmd.shell = ishell;
+        
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+    };
+
+pipeline_component: '|' command {
+        $$ = $2;
+    };
+
 
 tail:
     | ';' {  }

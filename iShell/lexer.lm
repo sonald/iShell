@@ -6,10 +6,10 @@
 %option noyywrap
 
  // any non-white is legal, what is means will determined by parser
-VALID [^ \t\n\r;<>?]
+VALID [a-zA-Z-]
 
 %%
-";"|"<"|">"   { return yytext[0]; }
+";"|"<"|">"|"|"   { return yytext[0]; }
 
 "\n"         { return EOL; }
 
@@ -17,6 +17,5 @@ VALID [^ \t\n\r;<>?]
     yylval.id = strdup(yytext);
     return ID;
 }
-
 
 %%
