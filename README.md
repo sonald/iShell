@@ -9,3 +9,4 @@
 + add expansion after parsing
 + redirect
 + pipelining
++ add quoted string/ single quoted string support (lexer)

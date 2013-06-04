@@ -25,14 +25,14 @@
 %token <id> ID
 %token EOL
 %type <args> ids
-%type <cmd> command cmdline command_group pipeline pipeline_tail pipeline_component
+%type <cmd> command cmdline command_group pipeline pipeline_tail pipeline_component command_atom
 %%
 
 cmdline: { cmdptr = -1; } command_group;
 
 
 command_group:
-    command tail {
+    command_atom tail {
         GroupCommand* cmd = [[GroupCommand alloc] init];
         cmd.commands = [NSArray arrayWithObject: parsed[$1]];
         cmd.shell = ishell;
@@ -40,7 +40,7 @@ command_group:
         parsed[++cmdptr] = cmd;
         $$ = cmdptr;
     }
-    | command ';' command_group tail {
+    | command_atom ';' command_group tail {
         GroupCommand* cmd = [[GroupCommand alloc] init];
         
         GroupCommand* cmd2 = parsed[$3];
@@ -54,6 +54,11 @@ command_group:
     }
     ;
 
+command_atom: 
+    command
+    | pipeline
+    ;
+    
 command: 
     ID ids {
         Command *cmd = [[Command alloc] init];
@@ -70,7 +75,6 @@ command:
         parsed[++cmdptr] = cmd;
         $$ = cmdptr;
     }
-    | pipeline
     ;
 
 

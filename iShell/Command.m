@@ -139,7 +139,8 @@
 }
 
 - (NSString*) description {
-    return [NSString stringWithFormat:@"%@(%@)", self.cmd, [self.args componentsJoinedByString:@","], nil];
+    return [NSString stringWithFormat:@"(%@:%@(%@))", [self className], self.cmd,
+            [self.args componentsJoinedByString:@","], nil];
 }
 
 
@@ -187,6 +188,7 @@
 
 - (NSString*)description {
     NSMutableString *info = [[NSMutableString alloc] init];
+    [info appendFormat:@"(%@:", [self className]];
     [self.commands enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         if (idx > 0) {
             [info appendFormat:@"; %@", obj];
@@ -194,13 +196,80 @@
             [info appendFormat:@"%@", obj];
         }
     }];
-    
+    [info appendString:@")"];
     return info;
 }
 @end
 
 
+
+@interface PipelineCommand ()
+- (void) setupPipe;
+@end
+
 @implementation PipelineCommand
+
+//TODO: set independent foreground group and make all LHSs shell's children
+- (void) setupPipe {
+    NSLog(@"setupPipe level %lu", [self.commands count]);
+    
+    if ([self.commands count] == 1) {
+        Command *last = [self.commands objectAtIndex:0];
+        NSLog(@"run last command %@", last);
+        [last exec];
+        NSAssert(NO, @"should never come here");
+    }
+    
+    NSMutableArray *copy = [self.commands mutableCopy];
+    Command* rhs = [copy objectAtIndex: [copy count] - 1];
+    [copy removeLastObject];
+    self.commands = [copy copy];
+    
+
+    int pfds[2];
+    if (pipe(pfds)) {
+        NSLog(@"pipe failed: %s", strerror(errno));
+        exit(-errno);
+    }
+    
+    switch (fork()) {
+        case 0:
+            // 1st cmd
+            close(pfds[0]);
+            if (pfds[1] != STDOUT_FILENO) {
+                if (dup2(pfds[1], STDOUT_FILENO) != STDOUT_FILENO) {
+                    NSLog(@"dup2: %s", strerror(errno));
+                    exit(errno);
+                }
+                close(pfds[1]);
+            }
+            
+            [self setupPipe];
+            break;
+            
+        case -1:
+            NSLog(@"fork failed");
+            exit(-errno);
+            break;
+            
+        default:
+            
+            // 2nd cmd
+            close(pfds[1]);
+            if (pfds[0] != STDIN_FILENO) {
+                if (dup2(pfds[0], STDIN_FILENO) != STDIN_FILENO) {
+                    NSLog(@"dup2: %s", strerror(errno));
+                    exit(errno);
+                }
+                close(pfds[0]);
+            }
+            
+            
+            NSLog(@"run rhs %@", rhs);
+            [rhs exec];
+            break;            
+    }
+}
 
 - (int)execute {
     NSLog(@"run PipelineCommand");
@@ -208,45 +277,7 @@
     switch(child = fork()) {
         case 0:
         {
-            int fildes[2];
-            if (pipe(fildes)) {
-                NSLog(@"pipe failed: %s", strerror(errno));
-                return -errno;
-            }
-            
-            Command* cmd1 = [self.commands objectAtIndex:0];
-            Command* cmd2 = [self.commands objectAtIndex:1];
-            NSLog(@"cmd1: %@, cmd2: %@", cmd1, cmd2);
-            
-            switch (fork()) {
-                case 0:
-                    // 2nd cmd
-                    close(fildes[1]);
-                    if (fildes[0] != STDIN_FILENO) {
-                        if (dup2(fildes[0], STDIN_FILENO) != STDIN_FILENO) {
-                            NSLog(@"dup2: %s", strerror(errno));
-                            exit(errno);
-                        }
-                        close(fildes[0]);
-                    }
-                    
-                    [cmd2 exec];
-                    break;
-                    
-                default:
-                    // 1st cmd
-                    close(fildes[0]);
-                    if (fildes[1] != STDOUT_FILENO) {
-                        if (dup2(fildes[1], STDOUT_FILENO) != STDOUT_FILENO) {
-                            NSLog(@"dup2: %s", strerror(errno));
-                            exit(errno);
-                        }
-                        close(fildes[1]);
-                    }
-                    
-                    [cmd1 exec];
-                    break;
-            }
+            [self setupPipe];
             break;
         }
             
@@ -269,13 +300,14 @@
             
             break;
         }
-
+            
     }
     return 0;
 }
 
 - (NSString*) description {
     NSMutableString *result = [[NSMutableString alloc] init];
+    [result appendFormat:@"(%@:", [self className]];
     [self.commands enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         if (idx == 0) {
             [result appendFormat:@"%@", obj];
@@ -283,7 +315,7 @@
             [result appendFormat:@"| %@", obj];
         }
     }];
-    
+    [result appendString:@")"];
     return result;
 }
 

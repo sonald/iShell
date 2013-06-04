@@ -70,6 +70,7 @@
 		517C597A175450680018DE14 /* IShell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IShell.m; sourceTree = "<group>"; };
 		517C597B175450680018DE14 /* lexer.lm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; path = lexer.lm; sourceTree = "<group>"; };
 		517C597C175450680018DE14 /* parser.ym */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; path = parser.ym; sourceTree = "<group>"; };
+		51E96F2D175C9F26001D281D /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +119,7 @@
 			children = (
 				517C5977175450680018DE14 /* Command.h */,
 				517C5978175450680018DE14 /* Command.m */,
+				51E96F2D175C9F26001D281D /* README.md */,
 				517C5979175450680018DE14 /* IShell.h */,
 				517C597A175450680018DE14 /* IShell.m */,
 				517C597B175450680018DE14 /* lexer.lm */,

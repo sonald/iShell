@@ -6,7 +6,8 @@
 %option noyywrap
 
  // any non-white is legal, what is means will determined by parser
-VALID [a-zA-Z-]
+VALID [^;|<> \t\n\r]
+WS    [ \t\r]
 
 %%
 ";"|"<"|">"|"|"   { return yytext[0]; }
@@ -18,4 +19,5 @@ VALID [a-zA-Z-]
     return ID;
 }
 
+{WS}+    {};
 %%
