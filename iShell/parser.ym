@@ -20,12 +20,15 @@
     struct args_* args;
     char* id;
     int cmd; // index of cmd in parsed
+    char* string; // literal string
+    char* js; // inline js
 }
 
 %token <id> ID
 %token EOL
+%token <js> JS
 %type <args> ids
-%type <cmd> command cmdline command_group pipeline pipeline_tail pipeline_component command_atom
+%type <cmd> command cmdline command_group pipeline pipeline_tail pipeline_component command_atom jsinline
 %%
 
 cmdline: { cmdptr = -1; } command_group;
@@ -57,14 +60,26 @@ command_group:
 command_atom: 
     command
     | pipeline
+    | jsinline
     ;
     
+jsinline: 
+    JS {
+        JSCommand* cmd = [[JSCommand alloc] init];
+        cmd.shell = ishell;
+        cmd.script = [NSString stringWithUTF8String: $1];
+        
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+    }
+    ;
+
 command: 
     ID ids {
-        Command *cmd = [[Command alloc] init];
+        Command* cmd = [[Command alloc] init];
         cmd.cmd = [NSString stringWithUTF8String: $1];
         
-        NSMutableArray *arr =  [[NSMutableArray alloc] init];
+        NSMutableArray* arr =  [[NSMutableArray alloc] init];
         if ($2 != NULL) {
             for (int i = 0; i < $2->len; ++i) {
                 [arr addObject:[NSString stringWithUTF8String: $2->data[i]]];
@@ -80,13 +95,13 @@ command:
 
  /* pipeline processing */
 pipeline: command pipeline_tail {
-        PipelineCommand *cmd = [[PipelineCommand alloc] init];
+        PipelineCommand* cmd = [[PipelineCommand alloc] init];
         cmd.shell = ishell;
         
-        NSMutableArray *arr = [[NSMutableArray alloc] init];
+        NSMutableArray* arr = [[NSMutableArray alloc] init];
         [arr addObject: parsed[$1]];        
         
-        PipelineCommand *cmd2 = parsed[$2];
+        PipelineCommand* cmd2 = parsed[$2];
         [arr addObjectsFromArray: cmd2.commands];
 
         cmd.commands = arr;
@@ -97,7 +112,7 @@ pipeline: command pipeline_tail {
 
 pipeline_tail: 
     pipeline_component {
-        PipelineCommand *cmd = [[PipelineCommand alloc] init];
+        PipelineCommand* cmd = [[PipelineCommand alloc] init];
         cmd.commands = [NSArray arrayWithObject: parsed[$1]];
         cmd.shell = ishell;
         
@@ -105,10 +120,10 @@ pipeline_tail:
         $$ = cmdptr;
     }
     | pipeline_tail pipeline_component {
-        PipelineCommand *cmd = [[PipelineCommand alloc] init];
-        PipelineCommand *cmd2 = parsed[$1];
+        PipelineCommand* cmd = [[PipelineCommand alloc] init];
+        PipelineCommand* cmd2 = parsed[$1];
         
-        NSMutableArray *arr = [[NSMutableArray alloc] init];
+        NSMutableArray* arr = [[NSMutableArray alloc] init];
         [arr addObjectsFromArray: cmd2.commands];
         [arr addObject: parsed[$2]];
         
@@ -131,13 +146,13 @@ tail:
 ids: 
     { $$ = NULL; }
     | ID ids { 
-        $$ = malloc(sizeof(struct args_));
+        $$ = (struct args_*)malloc(sizeof(struct args_));
         $$->len = 1;
         if ($2 != NULL) {
             $$->len += $2->len;
         }
         
-        $$->data = malloc(sizeof(char*) * $$->len);
+        $$->data = (char**)malloc(sizeof(char*) * $$->len);
         $$->data[0] = strdup($1);
         for (int i = 1; $2 != NULL && i < $$->len; ++i) {
             $$->data[i] = strdup($2->data[i-1]);

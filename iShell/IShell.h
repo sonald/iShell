@@ -9,6 +9,7 @@
 #import <histedit.h>
 #import <Foundation/Foundation.h>
 #import "Command.h"
+#import <v8.h>
 
 @interface IShell: NSObject
 

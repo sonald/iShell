@@ -8,6 +8,7 @@
 
 #import "Command.h"
 #import "IShell.h"
+#import <v8.h>
 
 @interface Command() {
     NSDictionary *builtinCommands;
@@ -147,7 +148,7 @@
 // helpers
 - (char**) cmdToCZArray {
     unsigned long len = [self.args count] + 2;
-    char** czarr = malloc(sizeof(char*) * len);
+    char** czarr = (char**)malloc(sizeof(char*) * len);
     czarr[0] = strdup([self.cmd UTF8String]);
 
     [self.args enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -201,16 +202,14 @@
 }
 @end
 
-
-
 @interface PipelineCommand ()
-- (void) setupPipe;
+- (void) setupPipe: (int)pgid;
 @end
 
 @implementation PipelineCommand
 
 //TODO: set independent foreground group and make all LHSs shell's children
-- (void) setupPipe {
+- (void) setupPipe: (int)pgid {
     NSLog(@"setupPipe level %lu", [self.commands count]);
     
     if ([self.commands count] == 1) {
@@ -244,7 +243,7 @@
                 close(pfds[1]);
             }
             
-            [self setupPipe];
+            [self setupPipe: pgid];
             break;
             
         case -1:
@@ -253,7 +252,6 @@
             break;
             
         default:
-            
             // 2nd cmd
             close(pfds[1]);
             if (pfds[0] != STDIN_FILENO) {
@@ -263,8 +261,7 @@
                 }
                 close(pfds[0]);
             }
-            
-            
+
             NSLog(@"run rhs %@", rhs);
             [rhs exec];
             break;            
@@ -277,7 +274,7 @@
     switch(child = fork()) {
         case 0:
         {
-            [self setupPipe];
+            [self setupPipe: getpid()];
             break;
         }
             
@@ -317,6 +314,38 @@
     }];
     [result appendString:@")"];
     return result;
+}
+
+@end
+
+
+@implementation JSCommand
+
+- (NSString*) description {
+    return [NSString stringWithFormat:@"JS: %@", self.script];
+}
+
+- (int) execute {
+    NSLog(@"run JSCommand");
+    v8::Isolate* isolate = v8::Isolate::GetCurrent();
+    v8::HandleScope scope(isolate);
+    
+    v8::Persistent<v8::Context> context = v8::Context::New();
+    v8::Context::Scope context_scope(context);
+
+    v8::Handle<v8::String> source = v8::String::New([self.script UTF8String]);
+    v8::Handle<v8::Script> script = v8::Script::Compile(source);
+    v8::Handle<v8::Value> result = script->Run();
+
+    context.Dispose(isolate);
+
+    v8::String::AsciiValue ascii(result);
+    if (*ascii) {
+        NSLog(@"result: %s", *ascii);
+        [self.shell writeMessage:[NSString stringWithFormat:@"%s\n", *ascii]];
+    }
+    
+    return 0;
 }
 
 @end

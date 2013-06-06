@@ -9,9 +9,9 @@
 #import "IShell.h"
 #import "lexer.yy.h"
 #import "y.tab.h"
+#import <v8.h>
 
-
-static char *lprompt(EditLine *el) {
+static const char *lprompt(EditLine *el) {
     return "> ";
 }
 
@@ -81,7 +81,7 @@ static unsigned char elfn_quit(EditLine *e, int ch) {
     return nil;
 }
 
-extern int yyparse();
+int yyparse(IShell* ishell);
 
 - (Command*) parseLine: (NSString*) cmdline {
     if (!cmdline) {

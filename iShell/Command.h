@@ -45,6 +45,9 @@
 - (NSString*) description;
 @end
 
+@interface JSCommand : Command
+@property (nonatomic, retain) NSString* script;
+@end
 
 @protocol Printing
 
