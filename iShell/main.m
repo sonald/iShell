@@ -12,12 +12,16 @@ int main(int argc, const char * argv[])
 {
     @autoreleasepool {
         IShell* ishell = [[IShell alloc] init];
+
         [ishell writeMessage:(@"Welcome to iShell\n")];
-        
         while (1) {
-            NSString *line = [ishell readline];
+            NSString* line = [ishell readline];
             Command* cmd = [ishell parseLine:line];
             [cmd execute];
+
+            if ([[ishell valueForKey:@"quitLoop"] boolValue]) {
+                break;
+            }
         }
     }
     

@@ -17,34 +17,39 @@ static const char *lprompt(EditLine *el) {
 
 static unsigned char elfn_quit(EditLine *e, int ch) {
     NSLog(@"elfn_quit: %d", ch);
-    IShell* shell;
+    IShell __unsafe_unretained * shell;
     el_get(e, EL_CLIENTDATA, &shell);
     Command *cmd = [[Command alloc] init];
     cmd.cmd = @"exit";
     cmd.shell = shell;
-    return [cmd execute];
+    [cmd execute];
+    return CC_EOF;
 }
 
 @implementation IShell {
     NSFileHandle *_outputHandle;
     EditLine* _editLine;
     History* _hist;
+    BOOL _quitLoop;
 }
 
 - (id) init {
     self = [super init];
     if (self) {
+        _quitLoop = NO;
         _outputHandle = [NSFileHandle fileHandleWithStandardOutput];
         
         _editLine = el_init("ishell", stdin, stdout, stderr);
         _hist = history_init();
+        
+        NSString *rcpath = [NSString stringWithFormat:@"%s/.ishellrc", getenv("HOME")];
+        el_source(_editLine, [rcpath UTF8String]);
         
         el_set(_editLine, EL_HIST, history, _hist);
         el_set(_editLine, EL_SIGNAL, 1);
         el_set(_editLine, EL_TERMINAL, NULL);
         el_set(_editLine, EL_PROMPT, lprompt);
         el_set(_editLine, EL_EDITOR, "emacs");
-        el_set(_editLine, EL_TELLTC, NULL);
         
         el_set(_editLine, EL_CLIENTDATA, (__bridge void*)self);
         
@@ -52,6 +57,11 @@ static unsigned char elfn_quit(EditLine *e, int ch) {
         el_set(_editLine, EL_BIND, "^D", "el-quit", NULL);
     }
     return self;
+}
+
+- (void) setQuitLoop: (BOOL)val {
+    NSLog(@"mark quitloop: %d", val);
+    _quitLoop = val;
 }
 
 - (void) dealloc {

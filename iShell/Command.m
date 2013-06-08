@@ -30,15 +30,17 @@
         builtinCommands =
         @{
           @"exit": ^() {
-              exit(0);
+              [self.shell setValue:@YES forKey:@"quitLoop"];
+//              exit(0);
           },
           
           @"cd": ^() {
               const char* path = NULL;
               if ([self.args count] == 0) {
                   path = ".";
+              } else {
+                  path = [[self.args objectAtIndex:0] UTF8String];
               }
-              path = [[self.args objectAtIndex:0] UTF8String];
               
               int fd = -1;
               if ((fd = open(path, O_EXCL|O_RDONLY)) < 0) {
