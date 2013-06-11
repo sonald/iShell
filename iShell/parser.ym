@@ -28,7 +28,8 @@
 %token EOL
 %token <js> JS
 %type <args> ids
-%type <cmd> command cmdline command_group pipeline pipeline_tail pipeline_component command_atom jsinline
+%type <cmd> command cmdline command_group pipeline pipeline_tail pipeline_component 
+%type <cmd> command_atom jsinline var_assign
 %%
 
 cmdline: { cmdptr = -1; } command_group;
@@ -61,8 +62,25 @@ command_atom:
     command
     | pipeline
     | jsinline
+    | var_assign
     ;
+
+var_assign:
+    ID '=' ID     {
+        VarAssignCommand* cmd = [[VarAssignCommand alloc] init];
+        cmd.shell = ishell;
+        cmd.var = [NSString stringWithUTF8String: $1];
+        cmd.value = [NSString stringWithUTF8String: $3];
+
+        parsed[++cmdptr] = cmd;
+        $$ = cmdptr;
+        NSLog(@"match var_assign");
+    }
+    | ID '=' '(' command_group ')'  {
     
+    }
+    ;
+
 jsinline: 
     JS {
         JSCommand* cmd = [[JSCommand alloc] init];

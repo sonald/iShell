@@ -6,8 +6,10 @@
 %option noyywrap
 
  // any non-white is legal, what is means will determined by parser
-VALID [^;|<> \t\n\r@]
-WS    [ \t\r]
+VALID  [^$;|<> \t\n\r@=\-+()]
+WS     [ \t\r]
+ALPHA  [a-zA-Z]
+WORD   [a-zA-Z0-9]
 
 %x STR
 %x UNI_STR
@@ -39,7 +41,7 @@ WS    [ \t\r]
     return JS;
  }
 
-;|<|>|\|     { return yytext[0]; }
+;|<|>|\||=     { return yytext[0]; }
 
 "\n"         { return EOL; }
 

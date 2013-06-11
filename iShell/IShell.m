@@ -26,11 +26,32 @@ static unsigned char elfn_quit(EditLine *e, int ch) {
     return CC_EOF;
 }
 
+struct builtin_func_descriptor_ {
+    const char* name;
+    const char* desc;
+    unsigned char (*func)(EditLine*, int);
+};
+
+#ifndef ARRAY_LEN
+#define ARRAY_LEN(arr) (sizeof(arr)/sizeof(arr[0]))
+#endif
+
+static struct builtin_func_descriptor_ builtin_funcs[] = {
+    {"el-quit", "quit shell", elfn_quit}
+};
+
+
+/**
+ * shell implementation
+ */
 @implementation IShell {
     NSFileHandle *_outputHandle;
     EditLine* _editLine;
     History* _hist;
     BOOL _quitLoop;
+
+    // local vars here, make it KVC compliant
+    NSMutableDictionary* _environ;
 }
 
 - (id) init {
@@ -38,13 +59,11 @@ static unsigned char elfn_quit(EditLine *e, int ch) {
     if (self) {
         _quitLoop = NO;
         _outputHandle = [NSFileHandle fileHandleWithStandardOutput];
-        
-        _editLine = el_init("ishell", stdin, stdout, stderr);
+        _environ = [@{@"SHELL": @"/bin/ishell"} mutableCopy];
+
         _hist = history_init();
-        
-        NSString *rcpath = [NSString stringWithFormat:@"%s/.ishellrc", getenv("HOME")];
-        el_source(_editLine, [rcpath UTF8String]);
-        
+        _editLine = el_init("ishell", stdin, stdout, stderr);
+
         el_set(_editLine, EL_HIST, history, _hist);
         el_set(_editLine, EL_SIGNAL, 1);
         el_set(_editLine, EL_TERMINAL, NULL);
@@ -53,8 +72,16 @@ static unsigned char elfn_quit(EditLine *e, int ch) {
         
         el_set(_editLine, EL_CLIENTDATA, (__bridge void*)self);
         
-        el_set(_editLine, EL_ADDFN, "el-quit", "quit shell", elfn_quit);
+        NSUInteger len = ARRAY_LEN(builtin_funcs);
+        for (int i = 0; i < len; ++i) {
+            el_set(_editLine, EL_ADDFN, builtin_funcs[i].name, builtin_funcs[i].desc,
+                   builtin_funcs[i].func);
+        }
+//        el_set(_editLine, EL_ADDFN, "el-quit", "quit shell", elfn_quit);
         el_set(_editLine, EL_BIND, "^D", "el-quit", NULL);
+
+        NSString *rcpath = [NSString stringWithFormat:@"%s/.ishellrc", getenv("HOME")];
+        el_source(_editLine, [rcpath UTF8String]);
     }
     return self;
 }
@@ -70,6 +97,46 @@ static unsigned char elfn_quit(EditLine *e, int ch) {
     history_end(_hist);
     el_end(_editLine);
 }
+
+// KVC compliant implementation
+// the tricky thing here is enumerator returns with keys
+// by mutators handling with NSArray
+- (NSUInteger)countOfEnviron {
+    NSLog(@"countOfEnviron");
+    return [_environ count];
+}
+
+- (NSEnumerator*)enumeratorOfEnviron {
+    NSLog(@"enumeratorOfEnviron");
+    NSArray* keys = [_environ allKeys];
+    NSMutableSet *result = [[NSMutableSet alloc] init];
+    for (NSString* key in keys) {
+        [result addObject:@[key, [_environ objectForKey:key]]];
+    }
+    
+    return [result objectEnumerator];
+}
+
+- (NSArray*)memberOfEnviron: (NSString*)key {
+    NSLog(@"memberOfEnviron: %@", key);
+    for (NSString* var in _environ) {
+        if ([var isEqualToString:key]) {
+            return [NSArray arrayWithObjects:key, [_environ objectForKey:key], nil];
+        }
+    }
+    
+    return nil;
+}
+
+- (void)addEnvironObject:(NSArray*)kvPair {
+    NSLog(@"addEnvironObject: %@", kvPair);
+    [_environ setObject:kvPair[1] forKey:kvPair[0]];
+}
+
+- (void)removeEnvironObject:(NSArray*)kvPair {
+    [_environ removeObjectForKey:kvPair[0]];
+}
+//~
 
 - (EditLine*) editLine {
     return _editLine;

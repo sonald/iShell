@@ -10,6 +10,8 @@
 #import "IShell.h"
 #import <v8.h>
 
+extern char** environ;
+
 @interface Command() {
     NSDictionary *builtinCommands;
 }
@@ -31,10 +33,9 @@
         @{
           @"exit": ^() {
               [self.shell setValue:@YES forKey:@"quitLoop"];
-//              exit(0);
           },
           
-          @"cd": ^() {
+          @"cd": ^int() {
               const char* path = NULL;
               if ([self.args count] == 0) {
                   path = ".";
@@ -45,21 +46,55 @@
               int fd = -1;
               if ((fd = open(path, O_EXCL|O_RDONLY)) < 0) {
                   NSLog(@"open failed: %s", strerror(errno));
-                  return;
+                  return errno;
               }
               
               if (fchdir(fd) < 0) {
                   NSLog(@"fchdir failed: %s", strerror(errno));
-                  return;
+                  return errno;
               }
+              
+              return 0;
           },
           
-          @"pwd": ^() {
+          @"pwd": ^int() {
               char *buf = getcwd(NULL, MAXPATHLEN);
               if (buf != NULL) {
                   NSString *msg = [[NSString stringWithUTF8String:buf] stringByAppendingString:@"\n"];
                   [self.shell writeMessage: msg];
+                  return 0;
               }
+              
+              return ENOMEM;
+          },
+          
+          @"local": ^int() {
+              //TODO merge exported vars
+              char **p = environ;
+              NSMutableDictionary *envs = [[NSMutableDictionary alloc] init];
+              while (*p) {
+                  id s = [NSString stringWithUTF8String:*p];
+                  NSArray *kv = [s componentsSeparatedByString:@"="];
+                  envs[kv[0]] = kv[1];
+                  ++p;
+              }
+              
+              id val = [self valueForKeyPath:@"shell.environ"];
+              for (id key in val) {
+                  envs[key[0]] = key[1];
+              }
+
+              NSMutableString *msg = [[NSMutableString alloc] init];
+              NSArray* keys = [envs keysSortedByValueUsingComparator:^NSComparisonResult(id o1, id o2) {
+                  return [o1 caseInsensitiveCompare:o2];
+              }];
+
+              for (id key in keys) {
+                  [msg appendFormat:@"%@ = %@\n", key, envs[key]];
+              }
+
+              [self.shell writeMessage:msg];
+              return 0;
           }
         };
     }
@@ -347,6 +382,21 @@
         [self.shell writeMessage:[NSString stringWithFormat:@"%s\n", *ascii]];
     }
     
+    return 0;
+}
+
+@end
+
+
+@implementation VarAssignCommand
+
+- (NSString*) description {
+    return [NSString stringWithFormat:@"%@ = %@", self.var, self.value];
+}
+
+- (int) execute {
+    id proxy = [self.shell mutableSetValueForKey:@"environ"];
+    [(NSMutableSet*)proxy addObject:[NSArray arrayWithObjects:self.var, self.value, nil]];
     return 0;
 }
 

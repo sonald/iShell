@@ -1,4 +1,5 @@
 # iShell
+a simple shell written in Objective C for fun.
 
 ## TODO
 + *OBSOLETE* integrate js engine (useless)
@@ -13,3 +14,6 @@
 + add more keybindings ( by config )
 + list keybindings
 + DSL scripting
++ plugin system
++ autocompletion
++ make builtins pipable

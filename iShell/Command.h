@@ -10,8 +10,6 @@
 
 @class IShell;
 
-//TODO: need a cmdline parser
-// need support pipes, redirection, sub,
 @interface Command : NSObject <NSCopying>
 
 @property (nonatomic, retain) NSString* cmd;
@@ -33,20 +31,20 @@
 // a sequence of commands executed consecutively
 @interface GroupCommand : Command
 @property (nonatomic, retain) NSArray* commands;
-
-- (int)execute;
-- (NSString*) description;
 @end
 
 @interface PipelineCommand : Command
 @property (nonatomic, retain) NSArray* commands;
-
-- (int)execute;
-- (NSString*) description;
 @end
 
 @interface JSCommand : Command
 @property (nonatomic, retain) NSString* script;
+@end
+
+
+@interface VarAssignCommand : Command
+@property (nonatomic, retain) NSString* var;
+@property (nonatomic, retain) NSString* value;
 @end
 
 @protocol Printing
