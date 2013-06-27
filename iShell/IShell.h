@@ -14,6 +14,7 @@
 @interface IShell: NSObject
 
 - (EditLine*) editLine;
+- (History *) hist;
 
 /**
  * @param line

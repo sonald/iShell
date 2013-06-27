@@ -35,6 +35,15 @@ extern char** environ;
               [self.shell setValue:@YES forKey:@"quitLoop"];
           },
           
+          @"h": ^() {
+              History *h = [self.shell hist];
+              HistEvent hev;
+              int ret = history(h, &hev, H_LAST);
+              for (; ret != -1; ret = history(h, &hev, H_PREV)) {
+                  [self.shell writeMessage:[NSString stringWithFormat:@"%4d %s\n", hev.num, hev.str]];
+              }
+          },
+          
           @"cd": ^int() {
               const char* path = NULL;
               if ([self.args count] == 0) {

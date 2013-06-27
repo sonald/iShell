@@ -18,6 +18,7 @@
 		517C597E175450680018DE14 /* IShell.m in Sources */ = {isa = PBXBuildFile; fileRef = 517C597A175450680018DE14 /* IShell.m */; };
 		517C597F175450680018DE14 /* lexer.lm in Sources */ = {isa = PBXBuildFile; fileRef = 517C597B175450680018DE14 /* lexer.lm */; };
 		517C5980175450680018DE14 /* parser.ym in Sources */ = {isa = PBXBuildFile; fileRef = 517C597C175450680018DE14 /* parser.ym */; };
+		5186EABB177C236500A32202 /* funcs.c in Sources */ = {isa = PBXBuildFile; fileRef = 5186EABA177C236500A32202 /* funcs.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -74,6 +75,8 @@
 		517C597A175450680018DE14 /* IShell.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = IShell.m; sourceTree = "<group>"; };
 		517C597B175450680018DE14 /* lexer.lm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; path = lexer.lm; sourceTree = "<group>"; };
 		517C597C175450680018DE14 /* parser.ym */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; path = parser.ym; sourceTree = "<group>"; };
+		5186EABA177C236500A32202 /* funcs.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = funcs.c; sourceTree = "<group>"; };
+		5186EABC177C239A00A32202 /* funcs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = funcs.h; sourceTree = "<group>"; };
 		51E96F2D175C9F26001D281D /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -135,9 +138,11 @@
 			children = (
 				517C5977175450680018DE14 /* Command.h */,
 				517C5978175450680018DE14 /* Command.m */,
+				5186EABA177C236500A32202 /* funcs.c */,
 				51E96F2D175C9F26001D281D /* README.md */,
 				517C5979175450680018DE14 /* IShell.h */,
 				517C597A175450680018DE14 /* IShell.m */,
+				5186EABC177C239A00A32202 /* funcs.h */,
 				517C597B175450680018DE14 /* lexer.lm */,
 				517C597C175450680018DE14 /* parser.ym */,
 				517C596817544F440018DE14 /* main.m */,
@@ -213,6 +218,7 @@
 				517C597E175450680018DE14 /* IShell.m in Sources */,
 				517C597F175450680018DE14 /* lexer.lm in Sources */,
 				517C5980175450680018DE14 /* parser.ym in Sources */,
+				5186EABB177C236500A32202 /* funcs.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
