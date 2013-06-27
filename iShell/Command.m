@@ -40,7 +40,7 @@ extern char** environ;
               if ([self.args count] == 0) {
                   path = ".";
               } else {
-                  path = [[self.args objectAtIndex:0] UTF8String];
+                  path = [self.args[0] UTF8String];
               }
               
               int fd = -1;
@@ -69,7 +69,6 @@ extern char** environ;
           },
           
           @"local": ^int() {
-              //TODO merge exported vars
               char **p = environ;
               NSMutableDictionary *envs = [[NSMutableDictionary alloc] init];
               while (*p) {
@@ -79,6 +78,7 @@ extern char** environ;
                   ++p;
               }
               
+              //FIXME: when in fork mode, this blocks, why?
               id val = [self valueForKeyPath:@"shell.environ"];
               for (id key in val) {
                   envs[key[0]] = key[1];
@@ -114,6 +114,31 @@ extern char** environ;
     return 0;
 }
 
+- (void)runInChild:(int (^)())block {
+    int child = -1;
+    switch(child = fork()) {
+        case 0:
+        {
+            block();
+            break;
+        }
+            
+        default:
+        {
+            int stat = 0;
+            waitpid(child, &stat, 0);
+            if (WIFEXITED(stat)) {
+                NSLog(@"exited with %d", WEXITSTATUS(stat));
+                
+            } else if (WIFSIGNALED(stat)) {
+                NSLog(@"signaled with %d", WTERMSIG(stat));
+            }
+            
+            break;
+        }
+    }    
+}
+
 - (int) execute {
     //1. try Command builtin
     if ([self isBuiltinCommand:self.cmd]) {
@@ -129,12 +154,12 @@ extern char** environ;
         return 0;
     }
     free(argv);
-    
-    //3. find external executable
+
     int child = -1;
     switch(child = fork()) {
         case 0:
         {
+            //3. find external executable
             [self exec];
             break;
         }
@@ -168,10 +193,9 @@ extern char** environ;
 }
 
 - (BOOL) runBuiltinCommand: (NSString*) cmd {
-    void (^block)() = [builtinCommands objectForKey:cmd];
+    int (^block)() = [builtinCommands objectForKey:cmd];
     if (block != nil) {
-        block();
-        return true;
+        return block();
     }
     return false;
 }
@@ -252,8 +276,13 @@ extern char** environ;
     if ([self.commands count] == 1) {
         Command *last = [self.commands objectAtIndex:0];
         NSLog(@"run last command %@", last);
-        [last exec];
-        NSAssert(NO, @"should never come here");
+        if ([last isBuiltinCommand:last.cmd]) {
+            [last.shell setValue:@YES forKey:@"quitLoop"];
+            [last execute];
+        } else {
+            [last exec];
+        }
+        return;
     }
     
     NSMutableArray *copy = [self.commands mutableCopy];
@@ -300,8 +329,13 @@ extern char** environ;
             }
 
             NSLog(@"run rhs %@", rhs);
-            [rhs exec];
-            break;            
+            if ([rhs isBuiltinCommand:rhs.cmd]) {
+                [rhs setValue:@YES forKey:@"quitLoop"];
+                [rhs execute];
+            } else {
+                [rhs exec];
+            }
+            break;
     }
 }
 

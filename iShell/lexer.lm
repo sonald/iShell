@@ -6,7 +6,7 @@
 %option noyywrap
 
  // any non-white is legal, what is means will determined by parser
-VALID  [^$;|<> \t\n\r@=\-+()]
+VALID  [^$;|<> \t\n\r@=+()]
 WS     [ \t\r]
 ALPHA  [a-zA-Z]
 WORD   [a-zA-Z0-9]
